@@ -24,20 +24,21 @@
 # TASK 1: Data Preparation
 ###############################################################
 
-
 import pandas as pd
 import datetime as dt
 from lifetimes import BetaGeoFitter
 from lifetimes import GammaGammaFitter
 from sklearn.preprocessing import MinMaxScaler
-pd.set_option('display.max_columns', None)
+pd.set_option('display.max_columns', 14)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.float_format', lambda x: '%.2f' % x)
 pd.options.mode.chained_assignment = None
 
-# 1. OmniChannel.csv verisini okuyunuz.Dataframe’in kopyasını oluşturunuz.
+
+# 1. Read csv
 df_ = pd.read_csv("data_20k.csv")
 df = df_.copy()
+
 
 # 2. Define the functions 'outlier_thresholds' and 'replace_with_thresholds' that are necessary to suppress outliers.
 # Note: When calculating CLTV, the 'frequency' values should be integers. Therefore, round the lower and upper limits with 'round()'.
@@ -52,8 +53,8 @@ def outlier_thresholds(dataframe, variable):
 
 def replace_with_thresholds(dataframe, variable):
     low_limit, up_limit = outlier_thresholds(dataframe, variable)
-    dataframe.loc[(dataframe[variable] < low_limit), variable] = round(low_limit,0)
-    dataframe.loc[(dataframe[variable] > up_limit), variable] = round(up_limit,0)
+    dataframe.loc[(dataframe[variable] < low_limit), variable] = round(low_limit, 0)
+    dataframe.loc[(dataframe[variable] > up_limit), variable] = round(up_limit, 0)
 
 
 # 3. If there are outliers in the variables 'order_num_total_ever_online,'
@@ -80,12 +81,13 @@ df[date_columns] = df[date_columns].apply(pd.to_datetime)
 # TASK 2: Creating the CLTV Data Structure
 ###############################################################
 
-# 1.Veri setindeki en son alışverişin yapıldığı tarihten 2 gün sonrasını analiz tarihi olarak alınız.
-df["last_order_date"].max() # 2021-05-30
-analysis_date = dt.datetime(2021,6,1)
+# 1. To make inferences about recent circumstance, the analysis date can be considered as 1 or 2 days after the last date value in the dataset.
+date_var = [col for col in df.columns if 'date' in col]
+df[date_var].max().max() # 2021-05-30
+analysis_date = dt.datetime(2021,6,1) # two days after from the latest order date.
 
 
-# 2.customer_id, recency_cltv_weekly, T_weekly, frequency ve monetary_cltv_avg değerlerinin yer aldığı yeni bir cltv dataframe'i oluşturunuz.
+# Create a new CLTV (Customer Lifetime Value) dataframe that includes customer_id, recency_cltv_weekly, T_weekly, frequency, and monetary_cltv_avg values.
 cltv_df = pd.DataFrame()
 cltv_df["customer_id"] = df["master_id"]
 cltv_df["recency_cltv_weekly"] = ((df["last_order_date"]- df["first_order_date"]).astype('timedelta64[D]')) / 7
